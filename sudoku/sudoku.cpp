@@ -12,10 +12,15 @@ NO TERMINAL:
 
 1º Gere (n) Sudokus completos utilizando os argumentos:
     (nome_do_arquivo_executavel) --criar (nº_de_sudokus)
-        EX: ./sudoku 
+        EX: ./sudoku --criar 10
 
 2º Remova (n) células de um determinado sudoku criado usando os argumentos:
-    (nome_do_arquivo_executavel) --remover (nº_de_celulas) (sudoku_"numero_do_sudoku_gerado")
+    (nome_do_arquivo_executavel) --remover (nº_de_celulas) (rem_sudoku_"numero_do_sudoku_gerado")
+        EX: ./sudoku --remover 30 sudoku_3
+
+3º Resolve um sudoku qualquer que tenha tudo as celulas removidas
+    (nome_do_arquivo_executavel) --resolver (res_sudoku_"nº do sudoku")
+        EX: ./sudoku --resolver rem_sudoku_1
 */
 
 #include <iostream>
