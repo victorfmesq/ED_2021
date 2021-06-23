@@ -26,6 +26,7 @@ NO TERMINAL:
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
+#include <unistd.h>
 #include <string.h>
 #include <fstream>
 #include <sstream>
@@ -254,6 +255,10 @@ void Sudoku::resolverSudoku(){
     *    lançar uma escessão dizendo que ha mais de uma forma de
     *    resolve-lo 
     */
+    time_t comecoDeEspera = time(NULL);
+    time_t tempoDeEspera = 10; // fim do loop
+    time_t fimDeEspera = comecoDeEspera + tempoDeEspera;
+
     int contadorPossiveis = 0;
     bool precisaRepetir = false;
     int* temp_res_sudoku = new int[81];
@@ -277,7 +282,9 @@ void Sudoku::resolverSudoku(){
                     int n = pegarProximo(possiveis);
                     bool sucesso = false;
                     while(true){ 
-                        if(n == 0){ break; }
+                        if(n == 0){
+                            break; 
+                        }
                         else if(
                             checarL(i, n, this->_sudoku) &&
                             checarC(j, n, this->_sudoku) &&
@@ -285,7 +292,10 @@ void Sudoku::resolverSudoku(){
                             _sudoku[(9 * i) + j] = n;
                             sucesso = true;
                             break;
-                        }else{ n = pegarProximo(possiveis); }
+                        }else{
+                            printf("loop time is : %s", ctime(&comecoDeEspera));
+                            n = pegarProximo(possiveis);
+                        }
                     } 
                     if(!sucesso){ precisaRepetir = true; } 
                     if(precisaRepetir){ break; }   
@@ -300,8 +310,12 @@ void Sudoku::resolverSudoku(){
                 first_res_sudoku[i] = this->_sudoku[i];
             }
         }
-    }while(precisaRepetir);
-    cout << "Resolvi um sudoku ... buscando mais solucoes" << endl;
+        comecoDeEspera = time(NULL);
+    }while(comecoDeEspera < fimDeEspera);
+    if(contadorPossiveis != 1){
+        cout << "tempo de espera excedido... nao foi possivel encontrar uma solucao diferente da original" << endl;
+        return;
+    }
     // rodar uma segunda vez para buscar uma outra solucao
     do{
         precisaRepetir = false;
@@ -345,7 +359,7 @@ void Sudoku::resolverSudoku(){
     return;
 }
 void gerarNames_files(int n, string *c, int* cont){
-    string file_name = "sudoku_";
+    string file_name = "SDK\\sudoku_";
     string file_number;
     for(int i = 0; i < n; i++){
         stringstream ss;
@@ -417,6 +431,7 @@ void escreverIterator(int* n){
 
 int main(int argc, char * args[]){
     srand(time(NULL));
+
     int* cont = new int[3];
     // 0 = criados , 1 = removidos, 2 = resolvidos
     cont[0] = 0; cont[1] = 0; cont[2] = 0;
@@ -463,7 +478,7 @@ int main(int argc, char * args[]){
         string n_celulas_removidas = convertCharToString(args[2]); 
         int qtd_celulas = stoi(n_celulas_removidas);
         fstream read_sudoku_file;
-        read_sudoku_file.open(args[3], ios::in);
+        read_sudoku_file.open("SDK\\" + convertCharToString(args[3]), ios::in);
         // testa se as entradas são validas
         if(qtd_celulas < 0 || qtd_celulas > 81){
              cout << "ERRO: numero de celulas para remocao eh invalido, tente novamente." << endl;
@@ -486,12 +501,8 @@ int main(int argc, char * args[]){
             // 2. -> guardar num arquivo chamado rem_sudoku_n 
             // criar arquivo
             fstream write_sudoku_file;
-            string name_file = "rem_sudoku_";
-            string num_file;
-            stringstream ss;
-            ss << cont[1]+1; // cont[1] == --remover
-            ss >> num_file;
-            name_file = name_file + num_file;
+            string namefile = convertCharToString(args[3]);
+            string name_file = "SDK\\rem_" + namefile; // rem_ qualqeur coisa
             char nameF[name_file.length() + 1];
             strcpy(nameF, name_file.c_str());
             write_sudoku_file.open(nameF,ios::out);
@@ -504,14 +515,12 @@ int main(int argc, char * args[]){
                 write_sudoku_file << str << " ";
             }
             write_sudoku_file.close();
-            cont[1]++; // atualiza cont 
         }
-        escreverIterator(cont);
     }
     // resolvendo sudoku
     else if(strcmp(args[1], "--resolver") == 0){
         fstream read_res_sudoku_file;
-        read_res_sudoku_file.open(args[2], ios::in);
+        read_res_sudoku_file.open("SDK\\rem_" + convertCharToString(args[2]), ios::in);
         if(!read_res_sudoku_file){
             cout << "ERRO: arquivo nao encontrado" << endl;
             return 0;
@@ -527,17 +536,25 @@ int main(int argc, char * args[]){
             res_sudoku.setSudoku(temp_res_sudoku);
             // resolver sudoku aqui
             res_sudoku.resolverSudoku();
+            fstream read_sudoku_file;
+            for(int i = 0; i < 81; i++){
+                if(res_sudoku.getSudokuNumber(i) == 0){
+                    int * aux = res_sudoku.getSudoku();
+                    read_sudoku_file.open("SDK\\" + convertCharToString(args[2]), ios::in);
+                    for(int i = 0; i < 81; i++){
+                        read_sudoku_file >> aux[i];
+                    }
+                    res_sudoku.setSudoku(aux);
+                }
+            }
+            read_sudoku_file.close();
             res_sudoku.printsudoku();
             read_res_sudoku_file.close();
             // Guardar num arquivo camado res_sudoku_n
             // criar arquivo
             fstream write_res_sudoku_file;
-            string name_file = "res_sudoku_";
-            string num_file;
-            stringstream ss;
-            ss << cont[2]+1; //cont[2] == --resolver
-            ss >> num_file;
-            name_file += num_file;
+            string namefile = convertCharToString(args[2]);
+            string name_file = "SDK\\sol_" + namefile;
             char nameF[name_file.length() + 1];
             strcpy(nameF, name_file.c_str());
             write_res_sudoku_file.open(nameF, ios::out);
@@ -550,9 +567,7 @@ int main(int argc, char * args[]){
                 write_res_sudoku_file << str << " ";
             }
             write_res_sudoku_file.close();
-            cont[2]++;
         }
-        escreverIterator(cont);
     }
     else{
         cout << "ERROR: Entrada invalida " << endl;
