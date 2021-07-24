@@ -32,6 +32,7 @@ NO TERMINAL:
 #include <sstream>
 #include <string>
 #include <random>
+#include <direct.h>
 
 using namespace std;
 
@@ -61,6 +62,14 @@ public:
     void setSudoku(int m[9*9]);
     int getSudokuNumber(int n);
 };
+
+inline string separator(){
+#ifdef _WIN32
+    return "SDK\\";
+#else
+    return "SDK/";
+#endif
+}
 Sudoku::Sudoku(int l, int c){
     this->l=l;
     this->c=c;
@@ -293,7 +302,7 @@ void Sudoku::resolverSudoku(){
                             sucesso = true;
                             break;
                         }else{
-                            printf("loop time is : %s", ctime(&comecoDeEspera));
+                            //printf("loop time is : %s", ctime(&comecoDeEspera));
                             n = pegarProximo(possiveis);
                         }
                     } 
@@ -358,18 +367,17 @@ void Sudoku::resolverSudoku(){
     }
     return;
 }
-void gerarNames_files(int n, string *c, int* cont){
-    string file_name = "SDK\\sudoku_";
+void gerarNames_files(int n, string *c){
+    string file_name = separator() + "sudoku_";
     string file_number;
     for(int i = 0; i < n; i++){
         stringstream ss;
-        int temp = cont[0]+1; // cont[0] = --criar
-        ss << temp;
+        ss << i+1;
         ss >> file_number;
         string str_final = file_name + file_number;
         c[i] = str_final;
-        cont[0] = temp; // atualiza cont
     }
+    
 }
 
 char* convertStringToChar(int i, string *c){
@@ -432,6 +440,7 @@ void escreverIterator(int* n){
 int main(int argc, char * args[]){
     srand(time(NULL));
 
+    _mkdir("SDK");
     int* cont = new int[3];
     // 0 = criados , 1 = removidos, 2 = resolvidos
     cont[0] = 0; cont[1] = 0; cont[2] = 0;
@@ -447,7 +456,7 @@ int main(int argc, char * args[]){
         sscanf(args[2], "%d", &qtd_sudokus);
         fstream write_sudoku_file;
         string name_files[qtd_sudokus];
-        gerarNames_files(qtd_sudokus, name_files, cont);
+        gerarNames_files(qtd_sudokus, name_files);
         for(int i = 0; i < qtd_sudokus; i++){
             char* nameF = {convertStringToChar(i, name_files)};
             write_sudoku_file.open(nameF, ios::out);
@@ -478,7 +487,7 @@ int main(int argc, char * args[]){
         string n_celulas_removidas = convertCharToString(args[2]); 
         int qtd_celulas = stoi(n_celulas_removidas);
         fstream read_sudoku_file;
-        read_sudoku_file.open("SDK\\" + convertCharToString(args[3]), ios::in);
+        read_sudoku_file.open(separator() + convertCharToString(args[3]), ios::in);
         // testa se as entradas são validas
         if(qtd_celulas < 0 || qtd_celulas > 81){
              cout << "ERRO: numero de celulas para remocao eh invalido, tente novamente." << endl;
@@ -502,7 +511,7 @@ int main(int argc, char * args[]){
             // criar arquivo
             fstream write_sudoku_file;
             string namefile = convertCharToString(args[3]);
-            string name_file = "SDK\\rem_" + namefile; // rem_ qualqeur coisa
+            string name_file = separator() + "rem_" + namefile; // rem_ qualqeur coisa
             char nameF[name_file.length() + 1];
             strcpy(nameF, name_file.c_str());
             write_sudoku_file.open(nameF,ios::out);
@@ -520,7 +529,7 @@ int main(int argc, char * args[]){
     // resolvendo sudoku
     else if(strcmp(args[1], "--resolver") == 0){
         fstream read_res_sudoku_file;
-        read_res_sudoku_file.open("SDK\\rem_" + convertCharToString(args[2]), ios::in);
+        read_res_sudoku_file.open(separator() + "rem_" + convertCharToString(args[2]), ios::in);
         if(!read_res_sudoku_file){
             cout << "ERRO: arquivo nao encontrado" << endl;
             return 0;
@@ -540,7 +549,7 @@ int main(int argc, char * args[]){
             for(int i = 0; i < 81; i++){
                 if(res_sudoku.getSudokuNumber(i) == 0){
                     int * aux = res_sudoku.getSudoku();
-                    read_sudoku_file.open("SDK\\" + convertCharToString(args[2]), ios::in);
+                    read_sudoku_file.open(separator() + convertCharToString(args[2]), ios::in);
                     for(int i = 0; i < 81; i++){
                         read_sudoku_file >> aux[i];
                     }
@@ -554,7 +563,7 @@ int main(int argc, char * args[]){
             // criar arquivo
             fstream write_res_sudoku_file;
             string namefile = convertCharToString(args[2]);
-            string name_file = "SDK\\sol_" + namefile;
+            string name_file = separator() + "sol_" + namefile;
             char nameF[name_file.length() + 1];
             strcpy(nameF, name_file.c_str());
             write_res_sudoku_file.open(nameF, ios::out);
