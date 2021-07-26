@@ -4,6 +4,13 @@
  * Matrícula: 412796
  * 
  * NOTAS: Arquivos serão gerados ao final da execução do programa conforme pedido nas instruções
+ * 
+ *      parte_01: referente aos resultados da primeia parte do trabalho
+ *          M = tamanho da bolha
+ *          P = quantidade de SWAPS
+ *      parte_02: referente aos resultados da segunda parte do trabalho.
+ *          Size = tamanho do vetor
+ *          P = quantidade de SWAPS (parse)
 */
 #include <iostream>
 #include <cstdlib>
@@ -108,7 +115,7 @@ int main(){
     _mkdir("SDK");
 
     // PARTE 1 bouble + insertion
-    uint size = 100;         // size é o tamanho do vetor
+    uint size = 10000;         // size é o tamanho do vetor
     uint w[size];   // W é um vetor de back up
     preencherVetor(w,size);
     uint v[size];   // V é o vetor que será ordenado
@@ -120,7 +127,9 @@ int main(){
         return 0;
     }
     uint m = 2;                  // M é o tamanho da bolha
+    cout << "Aguarde... o processo pode demorar. Vetor de tamanho: " << size << endl;
     while(m != size){
+        cout << "Tamanho da bolha: " << m << "\t Tamanho do vetor: "<< size << endl;
         GLOBAL_P = 0;   // zeramos GLOBAL_P para reutilizarmos para proxima iteração com M
         cpy(w,v,size);
         ordenar(v, size, m);
@@ -145,22 +154,23 @@ int main(){
     }
 
     uint size2 = 10;
-    uint v2[size2];
-    while(size2 < 100){
+    while(size2 <= 100000){
+        uint v2[size2];
         GLOBAL_P = 0;
         preencherVetor(v2,size2);
         quicksort(v2,0,size2);
         // escrever no arquivo
         string sn, sp;          // sn guarda a string de SIZE e sp guarda a string de GLOBAL_P (Parse)
         stringstream ss1, ss2;
-        ss1 << size;
+        ss1 << size2;
         ss1 >> sn;
         ss2 << GLOBAL_P;
         ss2 >> sp;
         part2_file << "Size: " << sn << "\t" << "P: " << sp << endl;
-        size += 5;
+        size2 += 5;
+        cout << "vet size: " << size2 << endl;
     }
-    print(v2,size2);
+    //print(v2,size2);
 
 
     return 0;
