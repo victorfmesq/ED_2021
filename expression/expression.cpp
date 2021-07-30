@@ -19,6 +19,7 @@ class Expression {
         // key = nome / value = valor da variáveil
         void put(string key, int value);     // set
         int getValueFrom(string key);        // get
+        bool findVariable(string v);
 };
 
 void Expression::put(string key, int value){
@@ -30,6 +31,14 @@ int Expression::getValueFrom(string key){
     if(it != exp.end())
         exp.erase (it);
     return exp.find(key)->second;
+}
+bool Expression::findVariable(string v){
+    map<string,int>::iterator it;
+    it = exp.find(v);
+    if(it != exp.find(v)){
+        return false;
+    }
+    return true;
 }
 
 string findNameIn_(string temp){
@@ -130,6 +139,80 @@ bool temPrioridade(char op1, char op2){
     return temPrioridade;
 }
 
+string checarExpressao(string temp, stack<char> op_stack){
+    string resposta;
+
+    // * verificar se as variáveis foram criadas
+            
+    // checar expressão
+    for(int i = 1; i < temp.length(); i++){
+        if( (temp[i] >= 40 && temp[i] <= 43) || (temp[i] == '-') || (temp[i] == '/') ){ // operadores (,),*,+,-,/
+            // verifciar se segue a regra de prioridades
+            if(op_stack.empty()){
+                cout << "a" <<endl;
+                op_stack.push(temp[i]); // adicionando operador na pilha de operadores
+            }    
+            else{
+                if(temPrioridade(temp[i], op_stack.top())){
+                    // add op na pilha
+                    cout << "b" <<endl;
+                    op_stack.push(temp[i]);
+                }
+                else{
+                    // add op na string
+                    cout << "c" <<endl;
+                    string aux;
+                    stringstream ss;
+                    ss << temp[i];
+                    ss >> aux;
+                    resposta.append(aux);
+                }
+                // tem prioridade
+                if(temp[i] == ')'){
+                    cout << "d" <<endl;
+                    for(int i = 0; i < op_stack.size(); i++){
+                        op_stack.pop();
+                        if( (op_stack.top() == '*') || (op_stack.top() == '/') || (op_stack.top() == '+') || (op_stack.top() == '-')){
+                            string aux;
+                            stringstream ss;
+                            ss << op_stack.top();
+                            ss >> aux;
+                            resposta.append(aux);
+                        }
+                    }
+                }
+            }
+        }
+        // variáveis
+        else if((temp[i] >= 65 && temp[i] <= 90) || (temp[i] >= 97 && temp[i] <= 122)){ 
+            cout << "e" << endl;
+            string aux;
+            stringstream ss;
+            ss << temp[i];
+            ss >> aux;
+            resposta.append(aux); // adicionando variáveis à string de resposta
+        }
+        else if(temp[i] == ' '){ continue; }
+        else{
+            cout << "ERRO: expressao invalida, por favor verifique e tente novamente" << endl;
+        }
+    // se chegou no ultimo elemento
+    if(temp[i] == temp[temp.length() - 1]){ 
+            for(int i = 0; i < op_stack.size(); i++){
+                if( (op_stack.top() == '*') || (op_stack.top() == '/') || (op_stack.top() == '+') || (op_stack.top() == '-')){
+                    string aux;
+                    stringstream ss;
+                    ss << op_stack.top();
+                    ss >> aux;
+                    resposta.append(aux);
+                }
+                op_stack.pop();
+            }
+        }
+    }
+    return resposta;
+}
+
 int main(){
     /**
      *  # PROMPT #
@@ -158,6 +241,7 @@ int main(){
         string temp;
         getline(cin, temp);
         char op = temp[0]; // operador
+
         if(op == ':'){
             // criar variáveis
             string nome, valor;
@@ -173,57 +257,23 @@ int main(){
         }
         else if(op == '!'){
             // resovler expressões
-            string resposta;
             stack<char> op_stack;
-            // * verificar se as variáveis foram criadas
-            
-            for(int i = 0; i < temp.length(); i++){
-                if( (temp[i] >= 40 && temp[i] <= 43) || (temp[i] == '-') || (temp[i] == '/') ){ // operadores (,),*,+,-,/
-                    // verifciar se segue a regra de prioridades
-                    if(!op_stack.empty())
-                        op_stack.push(temp[i]); // adicionando operador na pilha de operadores
-                    else{
-                        if(temPrioridade(temp[i], op_stack.top())){
-                            // add op na pilha
-                            op_stack.push(temp[i]);
-                        }
-                        else{
-                            // add op na string
-                            string aux;
-                            stringstream ss;
-                            ss << temp[i];
-                            ss >> aux;
-                            resposta.append(aux);
-                        }
-                        // tem prioridade
+            string resposta = checarExpressao(temp, op_stack);
+            cout << resposta << endl;
 
-                        if(temp[i] == ')'){
-                            for(int i = 0; i < op_stack.size(); i++){
-                                op_stack.pop();
-                                if( (op_stack.top() == '*') || (op_stack.top() == '/') || (op_stack.top() == '+') || (op_stack.top() == '-')){
-                                    string aux;
-                                    stringstream ss;
-                                    ss << temp[i];
-                                    ss >> aux;
-                                    resposta.append(aux);
-                                }
-                            }
-                        }
-
-                    }
-                }
-                else if((temp[i] >= 65 && temp[i] <= 90) || (temp[i] >= 97 && temp[i] <= 122)){
+            // checar se variáveis existem (BUG)
+            for(int i = 0; i < resposta.length(); i++){
+                if((resposta[i] >= 65 && resposta[i] <= 90) || (resposta[i] >= 97 && resposta[i] <= 122)){
                     string aux;
                     stringstream ss;
-                    ss << temp[i];
+                    ss << resposta[i];
                     ss >> aux;
-                    resposta.append(aux); // adicionando variáveis à string de resposta
-                }
-                else{
-                    cout << "ERRO: expressao invalida, por favor verifique e tente novamente" << endl;
+                    bool exist = exp.findVariable(aux);
+                    if(!exist){
+                        cout << "ERRO: Expressão inválida. Variável não encontrada..." << endl;
+                    }
                 }
             }
-
         }
         else{
             cout << "ERRO: Prefixo nao identificado por favor, verifique e tente novamente" << endl;
