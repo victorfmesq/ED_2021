@@ -141,21 +141,33 @@ bool temPrioridade(char op1, char op2){
 
 string checarExpressao(string temp, stack<char> op_stack){
     string resposta;
-
+    
     // * verificar se as variáveis foram criadas
             
     // checar expressão
+    int cont_op = 0;
     for(int i = 1; i < temp.length(); i++){
         if( (temp[i] >= 40 && temp[i] <= 43) || (temp[i] == '-') || (temp[i] == '/') ){ // operadores (,),*,+,-,/
             // verifciar se segue a regra de prioridades
             if(op_stack.empty()){
                 cout << "a" <<endl;
                 op_stack.push(temp[i]); // adicionando operador na pilha de operadores
+                if(  (op_stack.top() != '(' || op_stack.top() != ')') )
+                    cont_op++;
             }    
             else{
                 if(temPrioridade(temp[i], op_stack.top())){
                     // add op na pilha
                     cout << "b" <<endl;
+                    if(cont_op > 1){ // tem outro operador diferente de parenteses dentro da pilha
+                        cout << "p" << endl;
+                        string aux;
+                        stringstream ss;
+                        ss << op_stack.top();
+                        ss >> aux;
+                        resposta.append(aux);
+                        op_stack.pop();
+                    }
                     op_stack.push(temp[i]);
                 }
                 else{
@@ -171,6 +183,10 @@ string checarExpressao(string temp, stack<char> op_stack){
                 if(temp[i] == ')'){
                     cout << "d" <<endl;
                     for(int i = 0; i < op_stack.size(); i++){
+                        if(op_stack.top() == '('){
+                            op_stack.pop();
+                            break;
+                        }
                         op_stack.pop();
                         if( (op_stack.top() == '*') || (op_stack.top() == '/') || (op_stack.top() == '+') || (op_stack.top() == '-')){
                             string aux;
@@ -196,8 +212,9 @@ string checarExpressao(string temp, stack<char> op_stack){
         else{
             cout << "ERRO: expressao invalida, por favor verifique e tente novamente" << endl;
         }
-    // se chegou no ultimo elemento
-    if(temp[i] == temp[temp.length() - 1]){ 
+        // se chegou no ultimo elemento
+        if(temp[i] == temp[temp.length()-1]){ 
+            cout << "fim" << endl;
             for(int i = 0; i < op_stack.size(); i++){
                 if( (op_stack.top() == '*') || (op_stack.top() == '/') || (op_stack.top() == '+') || (op_stack.top() == '-')){
                     string aux;
@@ -205,8 +222,8 @@ string checarExpressao(string temp, stack<char> op_stack){
                     ss << op_stack.top();
                     ss >> aux;
                     resposta.append(aux);
+                    op_stack.pop();
                 }
-                op_stack.pop();
             }
         }
     }
@@ -214,22 +231,6 @@ string checarExpressao(string temp, stack<char> op_stack){
 }
 
 int main(){
-    /**
-     *  # PROMPT #
-     * 
-     *  >> expressão: 
-     *      (A + B) * C
-     *  >> Valor de uma variável
-     *      A = 5
-     *      B = 4
-     *      C = 2
-     * --------------------------
-     *  # É preciso atribuir variáveis e valores para utilizar uma expressão, caso contrario
-     *    retornará uma excessão.
-     * -------------------------
-     *  << Pilha com resultado da expressão
-     * 
-    */
     cout << endl <<"Bem-vindo ao prompt do programa!" << endl 
     << "Para ATRIBUIR VARIAVEIS utilize o prefixo (:) seguido pelo nome da varievel e o seu valor" << endl
     << "EX: >> : A 5" << endl
@@ -271,6 +272,31 @@ int main(){
                     bool exist = exp.findVariable(aux);
                     if(!exist){
                         cout << "ERRO: Expressão inválida. Variável não encontrada..." << endl;
+                    }
+                }
+            }
+
+            // processar expressão pos fixa
+            stack<char> exp_stack;
+            stack<int> res_stack;
+            for(int i = 0; i < resposta.length(); i++){
+                exp_stack.push(resposta[i]);
+                if((resposta[i] >= 40 && resposta[i] <= 43) || (resposta[i] == '-') || (resposta[i] == '/')){
+                    char op = exp_stack.top(); // guarda o operador
+                    exp_stack.pop();           // remove o operador
+                    char v2 = exp_stack.top(); // pega nome do segundo elemento
+                    exp_stack.pop();            
+                    char v1 = exp_stack.top(); // pega nome do  primeiro elemento
+                    exp_stack.pop(); 
+                    string sv1, sv2;
+                    stringstream ss;
+                    ss << v1;
+                    ss >> sv1;
+                    ss << v2;
+                    ss >> sv2;
+                    if(op == '+'){
+                        int resultado = exp.getValueFrom(sv1) + exp.getValueFrom(sv2); // pega o valor do 1° e do segundo
+                        res_stack.push(resultado);
                     }
                 }
             }
